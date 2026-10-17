@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: yakuri-backend-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/v1/salud
+    envVars:
+      - key: PORT
+        value: 8000
