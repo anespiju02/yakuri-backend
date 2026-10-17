@@ -1,0 +1,1005 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Yakuri API — Especificación OpenAPI 3.1",
+    "description": "Contrato OpenAPI para generación automática de cliente Angular (Secciones 4, 5, 6 y 9).",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Servidor de Desarrollo Local"
+    }
+  ],
+  "paths": {
+    "/api/v1/ingredientes": {
+      "get": {
+        "tags": [
+          "Ingredientes"
+        ],
+        "summary": "Lista y filtra la base científica de ingredientes (Sección 4.1)",
+        "operationId": "listarIngredientes",
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "verified",
+                    "insufficient_data"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por verified o insufficient_data",
+              "title": "Estado"
+            },
+            "description": "Filtrar por verified o insufficient_data"
+          },
+          {
+            "name": "busqueda",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Buscar por nombre INCI, sinónimo o categoría",
+              "title": "Busqueda"
+            },
+            "description": "Buscar por nombre INCI, sinónimo o categoría"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IngredienteDto"
+                  },
+                  "title": "Response Listaringredientes"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ingredientes"
+        ],
+        "summary": "Registra un nuevo ingrediente respetando la Regla 6.2",
+        "operationId": "registrarIngrediente",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearIngredienteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngredienteDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ingredientes/{ingrediente_id}": {
+      "get": {
+        "tags": [
+          "Ingredientes"
+        ],
+        "summary": "Obtiene el detalle y trazabilidad de un ingrediente específico",
+        "operationId": "obtenerIngredientePorId",
+        "parameters": [
+          {
+            "name": "ingrediente_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ingrediente Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngredienteDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/escaneos/texto": {
+      "post": {
+        "tags": [
+          "Escaneos"
+        ],
+        "summary": "Analiza texto de etiqueta (PLN + Motor A-E + Explicación RAG)",
+        "operationId": "escanearEtiquetaTexto",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SolicitudEscaneoTexto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoEscaneoDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/escaneos/imagen": {
+      "post": {
+        "tags": [
+          "Escaneos"
+        ],
+        "summary": "Fase 3: Extrae texto vía OCR desde foto de etiqueta y calcula impacto A-E",
+        "operationId": "escanearEtiquetaImagen",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_escanearEtiquetaImagen"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoEscaneoDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/escaneos": {
+      "get": {
+        "tags": [
+          "Escaneos"
+        ],
+        "summary": "Lista los escaneos almacenados en SQLite (Tabla products - Sección 4.2)",
+        "operationId": "listarHistorialEscaneos",
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limite"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ResultadoEscaneoDto"
+                  },
+                  "title": "Response Listarhistorialescaneos"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/escaneos/{scan_id}": {
+      "get": {
+        "tags": [
+          "Escaneos"
+        ],
+        "summary": "Recupera un escaneo específico por su ID",
+        "operationId": "obtenerEscaneoPorId",
+        "parameters": [
+          {
+            "name": "scan_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Scan Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoEscaneoDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auditorias-eticas/sustitucion-marca": {
+      "post": {
+        "tags": [
+          "AuditoriasEticas"
+        ],
+        "summary": "Sección 6.3: Ejecuta la prueba automatizada de sustitución de marca",
+        "operationId": "ejecutarPruebaSustitucionMarca",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReporteSustitucionMarcaDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auditorias-eticas/metricas-exito": {
+      "get": {
+        "tags": [
+          "AuditoriasEticas"
+        ],
+        "summary": "Sección 9: Evalúa los criterios de éxito del prototipo (>90% explicados, 100% sustitución)",
+        "operationId": "obtenerMetricasAuditoriaEtica",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricasPrototipoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metricas/criterios-exito": {
+      "get": {
+        "tags": [
+          "Metricas"
+        ],
+        "summary": "Sección 9: Evalúa los criterios de éxito del prototipo",
+        "operationId": "obtenerMetricasCriteriosExito",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricasPrototipoDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/salud": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "Verificar Estado Api",
+        "operationId": "verificarEstadoApi",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_escanearEtiquetaImagen": {
+        "properties": {
+          "archivo": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Archivo",
+            "description": "Fotografía de la etiqueta"
+          },
+          "brand_ignored": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Ignored"
+          },
+          "price_pen_ignored": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Pen Ignored"
+          }
+        },
+        "type": "object",
+        "required": [
+          "archivo"
+        ],
+        "title": "Body_escanearEtiquetaImagen"
+      },
+      "CrearIngredienteRequest": {
+        "properties": {
+          "inci_name": {
+            "type": "string",
+            "title": "Inci Name"
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Synonyms",
+            "default": []
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "water_impact_weight": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Impact Weight"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "insufficient_data"
+            ],
+            "title": "Status",
+            "default": "verified"
+          },
+          "justification": {
+            "type": "string",
+            "title": "Justification"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "source_url": {
+            "type": "string",
+            "title": "Source Url"
+          },
+          "last_reviewed": {
+            "type": "string",
+            "title": "Last Reviewed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inci_name",
+          "category",
+          "justification",
+          "source",
+          "source_url",
+          "last_reviewed"
+        ],
+        "title": "CrearIngredienteRequest"
+      },
+      "EjecucionMarcaDto": {
+        "properties": {
+          "brand_injected": {
+            "type": "string",
+            "title": "Brand Injected"
+          },
+          "price_injected": {
+            "type": "number",
+            "title": "Price Injected"
+          },
+          "score_numeric": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score Numeric"
+          },
+          "water_impact_score": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "N/A"
+            ],
+            "title": "Water Impact Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "brand_injected",
+          "price_injected",
+          "score_numeric",
+          "water_impact_score"
+        ],
+        "title": "EjecucionMarcaDto"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IngredienteDto": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "examples": [
+              "ing_0001"
+            ]
+          },
+          "inci_name": {
+            "type": "string",
+            "title": "Inci Name",
+            "examples": [
+              "Sodium Laureth Sulfate"
+            ]
+          },
+          "synonyms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Synonyms",
+            "examples": [
+              [
+                "SLES",
+                "sodium laureth sulphate"
+              ]
+            ]
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "examples": [
+              "tensioactivo"
+            ]
+          },
+          "water_impact_weight": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Impact Weight",
+            "description": "Peso de impacto hídrico (0 a 1). Null si status es insufficient_data (Regla 6.2)."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "insufficient_data"
+            ],
+            "title": "Status",
+            "default": "verified"
+          },
+          "justification": {
+            "type": "string",
+            "title": "Justification",
+            "description": "Justificación científica documentada para el RAG."
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "examples": [
+              "ECHA",
+              "US EPA",
+              "CosIng"
+            ]
+          },
+          "source_url": {
+            "type": "string",
+            "title": "Source Url",
+            "examples": [
+              "https://echa.europa.eu/"
+            ]
+          },
+          "last_reviewed": {
+            "type": "string",
+            "title": "Last Reviewed",
+            "examples": [
+              "2026-01-15"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "inci_name",
+          "category",
+          "justification",
+          "source",
+          "source_url",
+          "last_reviewed"
+        ],
+        "title": "IngredienteDto"
+      },
+      "MetricasPrototipoDto": {
+        "properties": {
+          "total_ingredientes": {
+            "type": "integer",
+            "title": "Total Ingredientes"
+          },
+          "ingredientes_verificados": {
+            "type": "integer",
+            "title": "Ingredientes Verificados"
+          },
+          "ingredientes_datos_insuficientes": {
+            "type": "integer",
+            "title": "Ingredientes Datos Insuficientes"
+          },
+          "total_escaneos_registrados": {
+            "type": "integer",
+            "title": "Total Escaneos Registrados"
+          },
+          "porcentaje_escaneos_con_indice_explicado": {
+            "type": "number",
+            "title": "Porcentaje Escaneos Con Indice Explicado"
+          },
+          "consistencia_sustitucion_marca_pct": {
+            "type": "number",
+            "title": "Consistencia Sustitucion Marca Pct"
+          },
+          "cumple_criterio_exito_90_pct_explicados": {
+            "type": "boolean",
+            "title": "Cumple Criterio Exito 90 Pct Explicados"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_ingredientes",
+          "ingredientes_verificados",
+          "ingredientes_datos_insuficientes",
+          "total_escaneos_registrados",
+          "porcentaje_escaneos_con_indice_explicado",
+          "consistencia_sustitucion_marca_pct",
+          "cumple_criterio_exito_90_pct_explicados"
+        ],
+        "title": "MetricasPrototipoDto"
+      },
+      "ReporteSustitucionMarcaDto": {
+        "properties": {
+          "consistency_rate_percent": {
+            "type": "number",
+            "title": "Consistency Rate Percent"
+          },
+          "all_passed": {
+            "type": "boolean",
+            "title": "All Passed"
+          },
+          "total_products_tested": {
+            "type": "integer",
+            "title": "Total Products Tested"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ResultadoProductoAuditoriaDto"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "consistency_rate_percent",
+          "all_passed",
+          "total_products_tested",
+          "results"
+        ],
+        "title": "ReporteSustitucionMarcaDto"
+      },
+      "ResultadoEscaneoDto": {
+        "properties": {
+          "scan_id": {
+            "type": "string",
+            "title": "Scan Id"
+          },
+          "raw_ocr_text": {
+            "type": "string",
+            "title": "Raw Ocr Text"
+          },
+          "matched_ingredients": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Matched Ingredients"
+          },
+          "unmatched_text_fragments": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unmatched Text Fragments"
+          },
+          "insufficient_data_ingredients": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Insufficient Data Ingredients"
+          },
+          "water_impact_score": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "N/A"
+            ],
+            "title": "Water Impact Score"
+          },
+          "score_numeric": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score Numeric"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "alternatives": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alternatives"
+          },
+          "timestamp": {
+            "type": "string",
+            "title": "Timestamp"
+          },
+          "traceability_details": {
+            "items": {
+              "$ref": "#/components/schemas/IngredienteDto"
+            },
+            "type": "array",
+            "title": "Traceability Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_id",
+          "raw_ocr_text",
+          "matched_ingredients",
+          "unmatched_text_fragments",
+          "insufficient_data_ingredients",
+          "water_impact_score",
+          "score_numeric",
+          "explanation",
+          "alternatives",
+          "timestamp",
+          "traceability_details"
+        ],
+        "title": "ResultadoEscaneoDto"
+      },
+      "ResultadoProductoAuditoriaDto": {
+        "properties": {
+          "product_type": {
+            "type": "string",
+            "title": "Product Type"
+          },
+          "baseline_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Score"
+          },
+          "baseline_grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "N/A"
+            ],
+            "title": "Baseline Grade"
+          },
+          "variance": {
+            "type": "number",
+            "title": "Variance"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "brand_runs": {
+            "items": {
+              "$ref": "#/components/schemas/EjecucionMarcaDto"
+            },
+            "type": "array",
+            "title": "Brand Runs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_type",
+          "baseline_score",
+          "baseline_grade",
+          "variance",
+          "passed",
+          "brand_runs"
+        ],
+        "title": "ResultadoProductoAuditoriaDto"
+      },
+      "SolicitudEscaneoTexto": {
+        "properties": {
+          "raw_ocr_text": {
+            "type": "string",
+            "title": "Raw Ocr Text",
+            "description": "Texto crudo extraído de la etiqueta"
+          },
+          "product_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Name",
+            "description": "Nombre descriptivo opcional"
+          },
+          "brand_ignored": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Ignored",
+            "description": "Regla 6.1: Recibido solo para pruebas de invarianza, jamás entra al motor de cálculo."
+          },
+          "price_pen_ignored": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Pen Ignored",
+            "description": "Regla 6.1: Precio en soles ignorado por el motor de puntaje."
+          }
+        },
+        "type": "object",
+        "required": [
+          "raw_ocr_text"
+        ],
+        "title": "SolicitudEscaneoTexto"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

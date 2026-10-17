@@ -1,0 +1,30 @@
+[project]
+name = "yakuri-backend"
+version = "1.0.0"
+description = "Backend OpenAPI 3.1 del prototipo ético Yakuri"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.115.6",
+    "pillow>=11.1.0",
+    "pydantic>=2.10.4",
+    "pytesseract>=0.3.13",
+    "python-multipart>=0.0.20",
+    "rapidfuzz>=3.11.0",
+    "uvicorn[standard]>=0.34.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.3.4",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.pyright]
+extraPaths = ["."]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "standard"
