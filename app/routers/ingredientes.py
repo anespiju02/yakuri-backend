@@ -2,6 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query, status
 from app.models import IngredienteDto, CrearIngredienteRequest, EstadoIngrediente
 from app.sqlite_repo import fetch_all_ingredients, fetch_ingredient_by_id, insert_ingredient
+from app.services.nlp_matcher import build_catalog_embeddings
 
 router = APIRouter(prefix="/api/v1/ingredientes", tags=["Ingredientes"])
 
@@ -53,4 +54,6 @@ def obtener_ingrediente(ingrediente_id: str):
 def registrar_ingrediente(payload: CrearIngredienteRequest):
     # Regla 6.2: Si el estado es insufficient_data, forzamos water_impact_weight = None
     peso = None if payload.status == "insufficient_data" else payload.water_impact_weight
-    return insert_ingredient(payload, peso)
+    ing = insert_ingredient(payload, peso)
+    build_catalog_embeddings()
+    return ing

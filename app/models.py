@@ -3,6 +3,17 @@ from typing import List, Optional, Literal
 
 EstadoIngrediente = Literal["verified", "insufficient_data"]
 GradoImpactoHidrico = Literal["A", "B", "C", "D", "E", "N/A"]
+MetodoGeneracion = Literal[
+    "plantilla_grounded",
+    "llm_grounded",
+    "modelo_ocr_real",
+    "modelo_ocr_fallback",
+    "matching_fuzzy",
+    "matching_semantico",
+    "hibrido_fuzzy_semantico",
+]
+MetodoOcr = Literal["modelo_ocr_real", "modelo_ocr_fallback", "texto_directo"]
+MetodoMatching = Literal["matching_fuzzy", "matching_semantico", "hibrido_fuzzy_semantico"]
 
 
 class IngredienteDto(BaseModel):
@@ -19,6 +30,10 @@ class IngredienteDto(BaseModel):
     source: str = Field(..., examples=["ECHA", "US EPA", "CosIng"])
     source_url: str = Field(..., examples=["https://echa.europa.eu/"])
     last_reviewed: str = Field(..., examples=["2026-01-15"])
+    match_method: Optional[Literal["fuzzy", "semantico"]] = Field(
+        default=None,
+        description="Método PLN mediante el cual se identificó este ingrediente en el texto analizado."
+    )
 
 
 class CrearIngredienteRequest(BaseModel):
@@ -58,6 +73,18 @@ class ResultadoEscaneoDto(BaseModel):
     alternatives: List[str]
     timestamp: str
     traceability_details: List[IngredienteDto]
+    generation_method: MetodoGeneracion = Field(
+        default="plantilla_grounded",
+        description="Método de generación de la explicación grounded (XAI)."
+    )
+    ocr_method: MetodoOcr = Field(
+        default="texto_directo",
+        description="Indica si el texto provino de OCR Tesseract real, respaldo determinista o texto directo."
+    )
+    matching_method: MetodoMatching = Field(
+        default="matching_fuzzy",
+        description="Método de PLN utilizado para relacionar los fragmentos con el catálogo."
+    )
 
 
 class EjecucionMarcaDto(BaseModel):

@@ -61,34 +61,46 @@ def init_db() -> None:
                 score_numeric REAL NULL,
                 explanation TEXT NOT NULL,
                 alternatives_json TEXT NOT NULL,
-                timestamp TEXT NOT NULL
+                timestamp TEXT NOT NULL,
+                generation_method TEXT DEFAULT 'plantilla_grounded',
+                ocr_method TEXT DEFAULT 'texto_directo',
+                matching_method TEXT DEFAULT 'matching_fuzzy'
             )
         """)
 
-        count = conn.execute("SELECT COUNT(*) FROM ingredients").fetchone()[0]
-        if count == 0:
-            for ing in INGREDIENTS_DB:
-                conn.execute(
-                    """
-                    INSERT INTO ingredients (
-                        id, inci_name, synonyms_json, category,
-                        water_impact_weight, status, justification,
-                        source, source_url, last_reviewed
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        ing.id,
-                        ing.inci_name,
-                        json.dumps(ing.synonyms, ensure_ascii=False),
-                        ing.category,
-                        ing.water_impact_weight,
-                        ing.status,
-                        ing.justification,
-                        ing.source,
-                        ing.source_url,
-                        ing.last_reviewed,
-                    ),
-                )
+        # Migración dinámica de columnas en products si la BD ya existía
+        cursor = conn.execute("PRAGMA table_info(products)")
+        existing_cols = {row[1] for row in cursor.fetchall()}
+        if "generation_method" not in existing_cols:
+            conn.execute("ALTER TABLE products ADD COLUMN generation_method TEXT DEFAULT 'plantilla_grounded'")
+        if "ocr_method" not in existing_cols:
+            conn.execute("ALTER TABLE products ADD COLUMN ocr_method TEXT DEFAULT 'texto_directo'")
+        if "matching_method" not in existing_cols:
+            conn.execute("ALTER TABLE products ADD COLUMN matching_method TEXT DEFAULT 'matching_fuzzy'")
+
+        # Cargar o actualizar el catálogo completo de ingredientes semilla
+        for ing in INGREDIENTS_DB:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO ingredients (
+                    id, inci_name, synonyms_json, category,
+                    water_impact_weight, status, justification,
+                    source, source_url, last_reviewed
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ing.id,
+                    ing.inci_name,
+                    json.dumps(ing.synonyms, ensure_ascii=False),
+                    ing.category,
+                    ing.water_impact_weight,
+                    ing.status,
+                    ing.justification,
+                    ing.source,
+                    ing.source_url,
+                    ing.last_reviewed,
+                ),
+            )
         conn.commit()
 
 
@@ -158,8 +170,9 @@ def save_product_scan(scan: ResultadoEscaneoDto) -> None:
                 scan_id, raw_ocr_text, matched_ingredients_json,
                 unmatched_text_fragments_json, insufficient_data_ingredients_json,
                 water_impact_score, score_numeric, explanation,
-                alternatives_json, timestamp
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                alternatives_json, timestamp,
+                generation_method, ocr_method, matching_method
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 scan.scan_id,
@@ -172,6 +185,9 @@ def save_product_scan(scan: ResultadoEscaneoDto) -> None:
                 scan.explanation,
                 json.dumps(scan.alternatives, ensure_ascii=False),
                 scan.timestamp,
+                scan.generation_method,
+                scan.ocr_method,
+                scan.matching_method,
             ),
         )
         conn.commit()
@@ -190,6 +206,11 @@ def _row_to_scan_dto(
         if ing_id in ingredients_map
     ]
 
+    keys = row.keys()
+    gen_method = row["generation_method"] if "generation_method" in keys and row["generation_method"] else "plantilla_grounded"
+    ocr_m = row["ocr_method"] if "ocr_method" in keys and row["ocr_method"] else "texto_directo"
+    mat_m = row["matching_method"] if "matching_method" in keys and row["matching_method"] else "matching_fuzzy"
+
     return ResultadoEscaneoDto(
         scan_id=row["scan_id"],
         raw_ocr_text=row["raw_ocr_text"],
@@ -202,6 +223,9 @@ def _row_to_scan_dto(
         alternatives=json.loads(row["alternatives_json"]),
         timestamp=row["timestamp"],
         traceability_details=traceability,
+        generation_method=gen_method,
+        ocr_method=ocr_m,
+        matching_method=mat_m,
     )
 
 

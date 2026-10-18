@@ -5,7 +5,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.models import SolicitudEscaneoTexto, ResultadoEscaneoDto, IngredienteDto
 from app.services.nlp_matcher import match_ingredients_from_ocr
 from app.services.scoring import calculate_water_impact, suggest_alternatives
-from app.services.rag_explainer import generate_grounded_explanation
+from app.services.rag_explainer import generate_explanation
 from app.services.ocr_service import extract_text_from_image_bytes
 from app.sqlite_repo import save_product_scan, fetch_recent_scans, fetch_scan_by_id
 
@@ -19,12 +19,19 @@ router = APIRouter(prefix="/api/v1/escaneos", tags=["Escaneos"])
     summary="Analiza texto de etiqueta (PLN + Motor A-E + Explicación RAG)"
 )
 def escanear_etiqueta_texto(payload: SolicitudEscaneoTexto) -> ResultadoEscaneoDto:
-    verified, insufficient, unmatched = match_ingredients_from_ocr(payload.raw_ocr_text)
+    return procesar_escaneo(payload, ocr_method="texto_directo")
+
+
+def procesar_escaneo(
+    payload: SolicitudEscaneoTexto,
+    ocr_method: str = "texto_directo"
+) -> ResultadoEscaneoDto:
+    verified, insufficient, unmatched, matching_method = match_ingredients_from_ocr(payload.raw_ocr_text)
 
     # Regla 6.1: brand_ignored y price_pen_ignored jamás entran al motor
     score_numeric, grade = calculate_water_impact(verified)
 
-    explanation = generate_grounded_explanation(
+    explanation, generation_method = generate_explanation(
         verified_ingredients=verified,
         insufficient_ingredients=insufficient,
         grade=grade,
@@ -48,6 +55,9 @@ def escanear_etiqueta_texto(payload: SolicitudEscaneoTexto) -> ResultadoEscaneoD
         alternatives=suggest_alternatives(grade),
         timestamp=datetime.now(timezone.utc).isoformat(),
         traceability_details=traceability,
+        generation_method=generation_method,
+        ocr_method=ocr_method,  # type: ignore
+        matching_method=matching_method,
     )
     save_product_scan(result)
     return result
@@ -65,13 +75,14 @@ async def escanear_etiqueta_imagen(
     price_pen_ignored: Optional[float]=Form(None),
 ) -> ResultadoEscaneoDto:
     image_bytes = await archivo.read()
-    raw_text = extract_text_from_image_bytes(image_bytes, archivo.filename or "")
-    return escanear_etiqueta_texto(
+    raw_text, ocr_method = extract_text_from_image_bytes(image_bytes, archivo.filename or "")
+    return procesar_escaneo(
         SolicitudEscaneoTexto(
             raw_ocr_text=raw_text,
             brand_ignored=brand_ignored,
             price_pen_ignored=price_pen_ignored,
-        )
+        ),
+        ocr_method=ocr_method,
     )
 
 

@@ -11,6 +11,8 @@ dependencies = [
     "pytesseract>=0.3.13",
     "python-multipart>=0.0.20",
     "rapidfuzz>=3.11.0",
+    "sentence-transformers>=3.0.0",
+    "google-genai>=1.0.0",
     "uvicorn[standard]>=0.34.0",
 ]
 

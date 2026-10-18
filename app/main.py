@@ -2,12 +2,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.sqlite_repo import init_db
+from app.services.nlp_matcher import init_semantic_model
 from app.routers import ingredientes, escaneos, auditorias_eticas, metricas
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    init_semantic_model()
     yield
 
 

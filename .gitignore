@@ -11,3 +11,6 @@ wheels/
 
 # Database
 *.db
+
+# Variables de entorno
+.env

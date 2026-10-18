@@ -673,6 +673,22 @@
             "examples": [
               "2026-01-15"
             ]
+          },
+          "match_method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "fuzzy",
+                  "semantico"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Method",
+            "description": "Método PLN mediante el cual se identificó este ingrediente en el texto analizado."
           }
         },
         "type": "object",
@@ -836,6 +852,43 @@
             },
             "type": "array",
             "title": "Traceability Details"
+          },
+          "generation_method": {
+            "type": "string",
+            "enum": [
+              "plantilla_grounded",
+              "llm_grounded",
+              "modelo_ocr_real",
+              "modelo_ocr_fallback",
+              "matching_fuzzy",
+              "matching_semantico",
+              "hibrido_fuzzy_semantico"
+            ],
+            "title": "Generation Method",
+            "description": "Método de generación de la explicación grounded (XAI).",
+            "default": "plantilla_grounded"
+          },
+          "ocr_method": {
+            "type": "string",
+            "enum": [
+              "modelo_ocr_real",
+              "modelo_ocr_fallback",
+              "texto_directo"
+            ],
+            "title": "Ocr Method",
+            "description": "Indica si el texto provino de OCR Tesseract real, respaldo determinista o texto directo.",
+            "default": "texto_directo"
+          },
+          "matching_method": {
+            "type": "string",
+            "enum": [
+              "matching_fuzzy",
+              "matching_semantico",
+              "hibrido_fuzzy_semantico"
+            ],
+            "title": "Matching Method",
+            "description": "Método de PLN utilizado para relacionar los fragmentos con el catálogo.",
+            "default": "matching_fuzzy"
           }
         },
         "type": "object",
